@@ -7,10 +7,8 @@ from collections import Counter
 import sys
 
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-#creds = ServiceAccountCredentials.from_json_keyfile_name("gspread-creds.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name("gspread-creds.json", scope)
 
-from run_app import resource_path
-creds = ServiceAccountCredentials.from_json_keyfile_name(resource_path("gspread-creds.json"), scope)
 
 
 client = gspread.authorize(creds)
