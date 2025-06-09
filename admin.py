@@ -8,14 +8,20 @@ import sys
 
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("gspread-creds.json", scope)
-
-
-
 client = gspread.authorize(creds)
 sheet_url = "https://docs.google.com/spreadsheets/d/1xY6RLbn__y3T7gnTJ7tCCDpbLbNYNsjidpDIhEiRn3w/edit?usp=sharing"
 sheet = client.open_by_url(sheet_url).sheet1
 
+from fpdf import FPDF
+from io import BytesIO
+
+from fpdf import FPDF
+from io import BytesIO
+
 def create_pdf(data):
+    from fpdf import FPDF
+    from io import BytesIO
+
     class StyledPDF(FPDF):
         def header(self):
             self.set_fill_color(200, 0, 0)
@@ -39,7 +45,7 @@ def create_pdf(data):
             self.cell(0, 6, f"  {title}", ln=True, fill=True)
             self.ln(1)
 
-        def field(self, label, val, w1=40, w2=70, h=5.5):
+        def field(self, label, val, w1=30, w2=60, h=5.5):
             self.set_font("Arial", 'B', 9)
             self.set_text_color(40, 40, 40)
             self.cell(w1, h, label, border=0)
@@ -50,40 +56,42 @@ def create_pdf(data):
         def newline(self, h=5.5):
             self.ln(h)
 
-    pdf = StyledPDF(orientation='L', unit='mm', format='A4')
-    pdf.set_auto_page_break(auto=False)
+    pdf = StyledPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
+    pdf.set_auto_page_break(auto=False)
 
     pdf.set_font("Arial", 'B', 10)
     pdf.set_text_color(0)
     pdf.cell(0, 8, f"Unique ID: {data.get('Unique ID', '-')}", ln=True, align="R")
 
     pdf.section_title("1. Personal Information")
-    pdf.field("Name:", data.get("Name", "-"))
-    pdf.field("Email:", data.get("Email", "-"))
-    pdf.field("Phone:", data.get("Phone", "-"))
+    pdf.field("Name:", data["Name"])
+    pdf.field("Email:", data["Email"])
     pdf.newline()
-    pdf.field("DOB:", data.get("DOB", "-"))
-    pdf.field("Gender:", data.get("Gender", "-"))
-    pdf.field("Category:", data.get("Category", "-"))
+    pdf.field("Phone:", data["Phone"])
+    pdf.field("DOB:", data["DOB"])
     pdf.newline()
-    pdf.field("Father's Name:", data.get("Father's Name", "-"))
-    pdf.field("Mother's Name:", data.get("Mother's Name", "-"))
+    pdf.field("Gender:", data["Gender"])
+    pdf.field("Category:", "GEN")
+    pdf.newline()
+    pdf.field("Father's Name:", data["Father's Name"])
+    pdf.field("Mother's Name:", data["Mother's Name"])
     pdf.newline()
     pdf.set_font("Arial", 'B', 9)
     pdf.cell(35, 5.5, "Address:", border=0)
     pdf.set_font("Arial", '', 9)
-    pdf.multi_cell(0, 5.5, data.get("Address", "-"))
+    pdf.multi_cell(0, 5.5, data["Address"])
 
     pdf.section_title("2. Academic Preferences")
-    pdf.field("Course:", data.get("Course", "-"))
-    pdf.field("Entrance Exam:", data.get("Appeared Entrance Exam", "-"))
-    pdf.field("Exam Name:", data.get("Entrance Exam Name", "-"))
+    pdf.field("Course:", data["Course"])
+    pdf.field("Entrance Exam:", data["Appeared Entrance Exam"])
+    pdf.newline()
+    pdf.field("Exam Name:", data["Entrance Exam Name"])
     pdf.newline()
 
     pdf.section_title("3. 10th & 12th Board Details")
-    pdf.field("10th %:", f"{data.get('10th %', '-')}%")
-    pdf.field("12th %:", f"{data.get('12th %', '-')}%")
+    pdf.field("10th %:", f"{data['10th %']}%")
+    pdf.field("12th %:", f"{data['12th %']}%")
     pdf.newline()
     pdf.field("10th School:", data.get("10th School", "-"))
     pdf.field("10th Board:", data.get("10th Board", "-"))
@@ -91,17 +99,34 @@ def create_pdf(data):
     pdf.field("12th School:", data.get("12th School", "-"))
     pdf.field("12th Board:", data.get("12th Board", "-"))
     pdf.newline()
+
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(0, 6, "10th Subjects & Marks:", ln=True)
     pdf.set_font("Arial", '', 9)
-    pdf.multi_cell(0, 5, "10th Subjects: MATH | SCIENCE | ENGLISH | HINDI | SOCIAL SCIENCE | COMPUTER")
-    pdf.multi_cell(0, 5, "12th Subjects: MATHS/BIO | PHYSICS | CHEMISTRY | COMPUTER | ENGLISH | PCM/PCB %")
+    subjects_10 = ["MATH", "SCIENCE", "ENGLISH", "HINDI", "SOCIAL SCIENCE", "COMPUTER"]
+    for sub in subjects_10:
+        pdf.cell(60, 5, f"{sub}:  [       ]", ln=False)
+        if sub == "ENGLISH" or sub == "SOCIAL SCIENCE":
+            pdf.ln(5)
+
+    pdf.ln(6)
+
+    pdf.set_font("Arial", 'B', 9)
+    pdf.cell(0, 6, "12th Subjects & Marks:", ln=True)
+    pdf.set_font("Arial", '', 9)
+    subjects_12 = ["MATHS/BIO", "PHYSICS", "CHEMISTRY", "COMPUTER", "ENGLISH", "PCM/PCB %"]
+    for sub in subjects_12:
+        pdf.cell(60, 5, f"{sub}:  [       ]", ln=False)
+        if sub == "CHEMISTRY" or sub == "ENGLISH":
+            pdf.ln(5)
+
+    pdf.ln(10)
 
     pdf.section_title("4. Other Course Details")
     pdf.field("Course:", data.get("Other Course", "-"))
-    pdf.newline()
     pdf.field("College:", data.get("Other College", "-"))
     pdf.newline()
     pdf.field("University:", data.get("Other University", "-"))
-    pdf.newline()
     pdf.field("Percentage:", f"{data.get('Other Course %', '-')}%")
     pdf.newline()
 
@@ -114,21 +139,23 @@ def create_pdf(data):
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 10, "Admission Source:", ln=True)
     pdf.set_font("Arial", size=12)
-    source = data.get("Admission Source", "")
-    direct = "[*]" if source == "Direct" else "[ ]"
-    ccb = "[*]" if source == "CCB" else "[ ]"
-    pdf.cell(0, 8, f"{direct} Direct    {ccb} CCB", ln=True)
+    direct = data.get("Admission Source") == "Direct"
+    ccb = data.get("Admission Source") == "CCB"
+    pdf.cell(0, 8, f"[{'*' if direct else ' '}] Direct    [{'*' if ccb else ' '}] CCB", ln=True)
     pdf.ln(5)
 
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 6, "FOR OFFICE USE", ln=True)
     pdf.set_font("Arial", '', 9)
     pdf.multi_cell(0, 8, "COMMENTS/REMARKS:\n\n")
-    pdf.cell(120, 8, "Chairman", ln=0)
+    pdf.cell(90, 8, "Chairman", ln=0)
     pdf.cell(0, 8, "Admission Counselor", ln=True)
 
     pdf_output = pdf.output(dest='S').encode('latin1')
     return BytesIO(pdf_output)
+
+
+
 
 def rerun():
     sys.exit()
