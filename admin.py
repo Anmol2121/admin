@@ -15,9 +15,6 @@ sheet = client.open_by_url(sheet_url).sheet1
 from fpdf import FPDF
 from io import BytesIO
 
-from fpdf import FPDF
-from io import BytesIO
-
 def create_pdf(data):
     from fpdf import FPDF
     from io import BytesIO
@@ -27,7 +24,7 @@ def create_pdf(data):
             self.set_fill_color(200, 0, 0)
             self.set_text_color(255, 255, 255)
             self.set_font("Arial", 'B', 14)
-            self.cell(0, 10, "MEERUT INSTITUTE OF TECHNOLOGY", ln=True, align="C", fill=True)
+            self.cell(0, 10, "MEERUT INSTITUTE OF TECHNOLOGY, Meerut", ln=True, align="C", fill=True)
             self.set_font("Arial", 'B', 11)
             self.cell(0, 9, "Student Registration Form", ln=True, align="C")
             self.ln(3)
@@ -265,6 +262,9 @@ if not st.session_state.logged_in:
             st.error("Invalid username or password.")
 
 else:
+    #from streamlit_autorefresh import st_autorefresh
+    #count = st_autorefresh(interval=10 * 1000, limit=0, key="auto_refresh")
+
     #st.title("MIT Admission Admin Dashboard")
 
     st.markdown("<h1 style='text-align: center; font-weight: bold; font-size: 3rem; background: -webkit-linear-gradient(45deg, #1e88e5, #43cea2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>MIT Admission Admin Dashboard</h1>", unsafe_allow_html=True)
@@ -283,7 +283,7 @@ else:
     "Annual Income", "Address", "PIN", "Course", "Appeared Entrance Exam", "Entrance Exam Name", 
     "Roll No", "Application No", "Score", "10th %", "10th School", "10th Board", "10th Roll No", 
     "12th %", "12th School", "12th Board", "12th Roll No", "Other Course", "Other College", 
-    "Other University", "Other Course %", "Admission Source"
+    "Other University", "Other Course %", "Admission Source","Status"
 ]
 
     duplicates = set([x for x in headers if headers.count(x) > 1 and x.strip()])
@@ -299,6 +299,9 @@ else:
             st.error(f"Missing expected headers: {missing}")
         else:
             st.success("Sheet headers validated successfully.")
+
+            if st.button("🔄 Refresh Dashboard"):
+                st.rerun()
 
             records = sheet.get_all_records()
 
@@ -319,6 +322,11 @@ else:
             st.subheader("Registered Students Overview")
             st.dataframe(records, use_container_width=True)
 
+#===============================================================================================================
+            
+#Filter data using the pandas---->:
+
+#================================================================================================================
             st.subheader("Search Student Record")
             col1, col2 = st.columns([1, 2])
             with col1:
@@ -355,5 +363,6 @@ else:
                         file_name=f"{found['Unique ID']}_student.pdf",
                         mime="application/pdf"
                     )
+
                 else:
                     st.warning("No matching record found.")
