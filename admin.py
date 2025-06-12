@@ -57,6 +57,11 @@ def create_pdf(data):
     pdf.add_page()
     pdf.set_auto_page_break(auto=False)
 
+    # Clean the data to remove any unsupported characters
+    for key in data:
+        if isinstance(data[key], str):
+            data[key] = data[key].replace('\u2514', '').replace('\u2502', '').replace('\u250c', '')
+
     pdf.set_font("Arial", 'B', 10)
     pdf.set_text_color(0)
     pdf.cell(0, 8, f"Unique ID: {data.get('Unique ID', '-')}", ln=True, align="R")
@@ -148,10 +153,8 @@ def create_pdf(data):
     pdf.cell(90, 8, "Chairman", ln=0)
     pdf.cell(0, 8, "Admission Counselor", ln=True)
 
-    pdf_output = pdf.output(dest='S').encode('latin1')
+    pdf_output = pdf.output(dest='S').encode('latin1', errors='ignore')  # Ignore problematic characters
     return BytesIO(pdf_output)
-
-
 
 
 def rerun():
